@@ -35,6 +35,9 @@ export default new Vuex.Store({
         getAge(state) {
           return state.age + 30;
         },
+        getCount(state) {
+          return state.count + 100;
+        },
       },
       mutations: {
         addAge(state, payload) {
