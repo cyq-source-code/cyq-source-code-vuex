@@ -1,19 +1,17 @@
 <template>
   <div id="app">
-    <button @click="clickBtn">btn</button>
-    {{ this.$store.state.count }}
+    <button @click="$store.state.count++">直接修改</button>
+    <button @click="$store.commit('addCount', 2)">commit</button>
+    <button @click="$store.dispatch('addCountAction', 5)">dispatch</button>
+
+    <div>{{ this.$store.state.count }}</div>
+    <div>{{ this.$store.getters.getCount }}</div>
   </div>
 </template>
 
 <script>
 export default {
   name: "App",
-  methods: {
-    clickBtn() {
-      console.log(this.$store);
-      this.$store.dispatch("addCountAction");
-    },
-  },
 };
 </script>
 
