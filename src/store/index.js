@@ -27,7 +27,7 @@ export default new Vuex.Store({
   },
   modules: {
     a: {
-      // namespaced: true, // 划分模块
+      namespaced: true, // 划分模块
       state: {
         age: 10,
       },
@@ -35,9 +35,9 @@ export default new Vuex.Store({
         getAge(state) {
           return state.age + 30;
         },
-        getCount(state) {
-          return state.count + 100;
-        },
+        // getCount(state) {
+        //   return state.count + 100;
+        // },
       },
       mutations: {
         addAge(state, payload) {
@@ -46,12 +46,13 @@ export default new Vuex.Store({
       },
       actions: {
         addAgeAction(context, payload) {
-          context.commit("addAge", payload);
+          context.commit("a/addAge", payload);
+          // context.commit("addAge", payload); // 此处有bug
         },
       },
       modules: {
         aa: {
-          // namespaced: true,
+          namespaced: true,
           state: {
             age: 50,
           },
@@ -59,7 +60,7 @@ export default new Vuex.Store({
       },
     },
     b: {
-      // namespaced: true, // 划分模块
+      namespaced: true, // 划分模块
       state: {
         age: 60,
       },

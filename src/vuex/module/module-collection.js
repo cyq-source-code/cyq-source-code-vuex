@@ -7,6 +7,16 @@ export default class ModuleCollection {
     this.root = null;
     this.register([], options);
   }
+
+  // 获取命名空间
+  getNamespace(path) {
+    let module = this.root; // 根
+    return path.reduce((str, key) => {
+      module = module.getChild(key);
+      return str + (module.namespaced ? `${key}/` : "");
+    }, "");
+  }
+
   register(path, rootModule) {
     let newModule = new Module(rootModule);
     if (this.root === null) {
