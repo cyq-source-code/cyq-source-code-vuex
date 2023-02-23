@@ -8,7 +8,9 @@ function installModule(store, rootState, path, rootModule) {
     let parent = path.slice(0, -1).reduce((start, current) => {
       return start[current];
     }, rootState);
-    parent[path[path.length - 1]] = rootModule.state;
+
+    Vue.set(parent, path[path.length - 1], rootModule.state); // 响应式
+    // parent[path[path.length - 1]] = rootModule.state;
   }
 
   let namespaced = store._modules.getNamespace(path);
@@ -41,6 +43,7 @@ function installModule(store, rootState, path, rootModule) {
 }
 
 function resetStoreVM(store, state) {
+  let oldVm = store._vm;
   const computed = {};
   const wrappedGetters = store._wrappedGetters;
   store.getters = {};
@@ -58,6 +61,9 @@ function resetStoreVM(store, state) {
     },
     computed,
   });
+  if (oldVm) {
+    Vue.nextTick(() => oldVm.$destroy());
+  }
 }
 class Store {
   constructor(options) {
@@ -87,6 +93,12 @@ class Store {
       this._actions[type].forEach((fn) => fn.call(this, payload));
     }
   };
+
+  registerModule(path, module) {
+    this._modules.register(path, module);
+    installModule(this, this.state, path, module.newModule);
+    resetStoreVM(this, this.state); // 计算属性（getters）不生效问题
+  }
 
   get state() {
     return this._vm._data.$$state;

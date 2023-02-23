@@ -19,6 +19,9 @@ export default class ModuleCollection {
 
   register(path, rootModule) {
     let newModule = new Module(rootModule);
+
+    rootModule.newModule = newModule; // 将用户属性和包装的属性关联到一起
+
     if (this.root === null) {
       this.root = newModule;
     } else {

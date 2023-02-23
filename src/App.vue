@@ -13,6 +13,11 @@
     <button @click="$store.dispatch('a/addAgeAction', 5)">dispatch</button>
     <div>{{ this.$store.state.a.age }}</div>
     <div>{{ this.$store.getters["a/getAge"] }}</div>
+    <hr />
+    <div>module a/e</div>
+    <button @click="$store.commit('a/e/add')">commit</button>
+    <div>{{ this.$store.state.a.e.age }}</div>
+    <div>eAge:{{ this.$store.getters["a/e/eAge"] }}</div>
   </div>
 </template>
 
