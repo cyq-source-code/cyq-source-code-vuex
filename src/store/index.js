@@ -3,8 +3,28 @@ import Vue from "vue";
 import Vuex from "../vuex";
 
 Vue.use(Vuex);
+const logger = (store) => {
+  console.log(store);
+  let prevState = JSON.parse(JSON.stringify(store.state));
+  store.subscribe((mutation, rootState) => {
+    let nextState = JSON.parse(JSON.stringify(rootState));
+    console.log(mutation, prevState);
+    console.log(mutation, nextState);
+    prevState = nextState;
+  });
+};
 
+const persisPlugin = function (store) {
+  let state = localStorage.getItem("VUEX");
+  if (state) {
+    store.replaceState(JSON.parse(state));
+  }
+  store.subscribe(function (mutationType, rootState) {
+    localStorage.setItem("VUEX", JSON.stringify(rootState));
+  });
+};
 const store = new Vuex.Store({
+  plugins: [persisPlugin, logger],
   state: {
     count: 0,
   },

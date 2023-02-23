@@ -2,6 +2,12 @@ import install, { Vue } from "./install";
 import ModuleCollection from "./module/module-collection";
 import { forEachValue } from "./utils";
 
+function getState(store, path) {
+  return path.reduce((start, current) => {
+    return start[current];
+  }, store.state);
+}
+
 function installModule(store, rootState, path, rootModule) {
   if (path.length > 0) {
     // 根模块
@@ -19,7 +25,8 @@ function installModule(store, rootState, path, rootModule) {
     store._mutations[namespaced + key] =
       store._mutations[namespaced + key] || [];
     store._mutations[namespaced + key].push((payload) => {
-      value(rootModule.state, payload);
+      value(getState(store, path), payload);
+      store.subscribes.forEach((fn) => fn({ type: key, payload }, store.state)); // 插件
     });
   });
   rootModule.forEachAction((key, value) => {
@@ -33,7 +40,7 @@ function installModule(store, rootState, path, rootModule) {
       return console.warn(`${key}已经存在了`);
     }
     store._wrappedGetters[namespaced + key] = () => {
-      return value(rootModule.state);
+      return value(getState(store, path));
     };
   });
   rootModule.forEachModule((key, value) => {
@@ -74,12 +81,22 @@ class Store {
     this._mutations = Object.create(null);
     this._actions = Object.create(null);
     this._wrappedGetters = Object.create(null); //存放计算属性
+    this.plugins = options.plugins || [];
+
+    this.subscribes = [];
 
     const state = this._modules.root.state;
     installModule(this, state, [], this._modules.root);
 
     resetStoreVM(this, state);
+
+    this.plugins.forEach((plugin) => plugin(this));
   }
+
+  replaceState(state) {
+    this._vm._data.$$state = state;
+  }
+
   commit = (type, payload) => {
     if (this._mutations[type]) {
       this._mutations[type].forEach((fn) => fn.call(this, payload));
@@ -87,8 +104,8 @@ class Store {
   };
 
   dispatch = (type, payload) => {
-    console.log(this._actions, type);
-    console.log(this._actions[type]);
+    // console.log(this._actions, type);
+    // console.log(this._actions[type]);
     if (this._actions[type]) {
       this._actions[type].forEach((fn) => fn.call(this, payload));
     }
@@ -102,6 +119,10 @@ class Store {
 
   get state() {
     return this._vm._data.$$state;
+  }
+
+  subscribe(fn) {
+    this.subscribes.push(fn);
   }
 }
 
