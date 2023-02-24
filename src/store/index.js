@@ -24,6 +24,7 @@ const persisPlugin = function (store) {
   });
 };
 const store = new Vuex.Store({
+  strict: true,
   plugins: [persisPlugin, logger],
   state: {
     count: 0,
@@ -40,9 +41,12 @@ const store = new Vuex.Store({
   },
   actions: {
     addCountAction(context, payload) {
-      setTimeout(() => {
-        context.commit("addCount", payload);
-      }, 1000);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          context.commit("addCount", payload);
+          resolve();
+        }, 1000);
+      });
     },
   },
   modules: {
@@ -104,3 +108,7 @@ store.registerModule(["a", "e"], {
   },
 });
 export default store;
+
+//1.mutation(改状态的)和action(用来处理公共的异步逻辑的)的区别 用法上来比较
+//2.action是支持promise   mutation不支特
+//3.mutation中可以修改状态  action中不能修攻状态(strcit模式下)

@@ -15,7 +15,9 @@ function installModule(store, rootState, path, rootModule) {
       return start[current];
     }, rootState);
 
-    Vue.set(parent, path[path.length - 1], rootModule.state); // 响应式
+    store._withCommiting(() => {
+      Vue.set(parent, path[path.length - 1], rootModule.state); // 响应式
+    });
     // parent[path[path.length - 1]] = rootModule.state;
   }
 
@@ -25,14 +27,18 @@ function installModule(store, rootState, path, rootModule) {
     store._mutations[namespaced + key] =
       store._mutations[namespaced + key] || [];
     store._mutations[namespaced + key].push((payload) => {
-      value(getState(store, path), payload);
+      // 修改 _commiting 的值
+      store._withCommiting(() => {
+        value(getState(store, path), payload);
+      });
       store.subscribes.forEach((fn) => fn({ type: key, payload }, store.state)); // 插件
     });
   });
   rootModule.forEachAction((key, value) => {
     store._actions[namespaced + key] = store._actions[namespaced + key] || [];
     store._actions[namespaced + key].push((payload) => {
-      value(store, payload);
+      let result = value(store, payload);
+      return result;
     });
   });
   rootModule.forEachGetter((key, value) => {
@@ -68,6 +74,15 @@ function resetStoreVM(store, state) {
     },
     computed,
   });
+  if (store.strict) {
+    store._vm.$watch(
+      () => store._vm._data.$$state,
+      () => {
+        console.error(store._commiting, "不能在mutation外修改值");
+      },
+      { sync: true, deep: true } // 同步
+    );
+  }
   if (oldVm) {
     Vue.nextTick(() => oldVm.$destroy());
   }
@@ -78,10 +93,13 @@ class Store {
     this._modules = new ModuleCollection(options);
     console.log(this._modules);
 
+    this.strict = options.strict; // 是否是严格模式
     this._mutations = Object.create(null);
     this._actions = Object.create(null);
     this._wrappedGetters = Object.create(null); //存放计算属性
     this.plugins = options.plugins || [];
+
+    this._commiting = false; // 判断是否是在mutation中改的值
 
     this.subscribes = [];
 
@@ -93,8 +111,16 @@ class Store {
     this.plugins.forEach((plugin) => plugin(this));
   }
 
+  _withCommiting(fn) {
+    this._commiting = true;
+    fn();
+    this._commiting = false;
+  }
+
   replaceState(state) {
-    this._vm._data.$$state = state;
+    this._withCommiting(() => {
+      this._vm._data.$$state = state;
+    });
   }
 
   commit = (type, payload) => {
@@ -107,7 +133,10 @@ class Store {
     // console.log(this._actions, type);
     // console.log(this._actions[type]);
     if (this._actions[type]) {
-      this._actions[type].forEach((fn) => fn.call(this, payload));
+      return Promise.all(
+        this._actions[type].map((fn) => fn.call(this, payload))
+      );
+      // this._actions[type].forEach((fn) => fn.call(this, payload));
     }
   };
 

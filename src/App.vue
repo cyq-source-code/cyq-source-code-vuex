@@ -3,6 +3,7 @@
     <button @click="$store.state.count++">直接修改</button>
     <button @click="$store.commit('addCount', 2)">commit</button>
     <button @click="$store.dispatch('addCountAction', 5)">dispatch</button>
+    <button @click="promiseDispatch">promiseDispatch</button>
 
     <div>{{ this.$store.state.count }}</div>
     <div>{{ this.$store.getters.getCount }}</div>
@@ -24,6 +25,13 @@
 <script>
 export default {
   name: "App",
+  methods: {
+    promiseDispatch() {
+      this.$store.dispatch("addCountAction", 5).then(() => {
+        console.log(123);
+      });
+    },
+  },
 };
 </script>
 
